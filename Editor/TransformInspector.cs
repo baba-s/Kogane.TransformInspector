@@ -1,115 +1,142 @@
-﻿using System.Linq;
+﻿using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace KoganeUnityLibEditor
 {
-    [CanEditMultipleObjects]
-    [CustomEditor( typeof( Transform ) )]
-    public sealed class TransformInspector : Editor
-    {
-        //==============================================================================
-        // 列挙型
-        //==============================================================================
-        private enum TargetType
-        {
-            POSITION,
-            ROTATION,
-            SCALE,
-        }
+	[CanEditMultipleObjects]
+	[CustomEditor( typeof( Transform ) )]
+	public sealed class TransformInspector : Editor
+	{
+		//==============================================================================
+		// 定数(const)
+		//==============================================================================
+		private const BindingFlags SET_LOCAL_EULER_ANGLES_ATTR =
+			BindingFlags.Instance |
+			BindingFlags.NonPublic;
 
-        //==============================================================================
-        // 変数
-        //==============================================================================
-        private GUIStyle m_buttonStyle;
+		//==============================================================================
+		// 定数(static readonly)
+		//==============================================================================
+		private static readonly object[]   RESET_ROTATION_PARAMETERS = { Vector3.zero, 0 };
+		private static readonly GUIContent PROPERTY_FIELD_LABEL      = new GUIContent( string.Empty );
 
-        //==============================================================================
-        // 関数
-        //==============================================================================
-        public override void OnInspectorGUI()
-        {
-            if ( m_buttonStyle == null )
-            {
-                m_buttonStyle = new GUIStyle( EditorStyles.toolbarButton )
-                {
-                    fixedHeight = 20,
-                    fixedWidth  = 20,
-                };
-            }
+		//==============================================================================
+		// 変数
+		//==============================================================================
+		private SerializedProperty   m_positionProperty;
+		private SerializedProperty   m_rotationProperty;
+		private SerializedProperty   m_scaleProperty;
+		private GUIStyle             m_resetButtonStyle;
+		private TransformRotationGUI m_transformRotationGUI;
+		private MethodInfo           m_setLocalEulerAnglesMethod;
 
-            serializedObject.Update();
+		//==============================================================================
+		// 関数
+		//==============================================================================
+		/// <summary>
+		/// 有効になった時に呼び出されます
+		/// </summary>
+		private void OnEnable()
+		{
+			m_positionProperty = serializedObject.FindProperty( "m_LocalPosition" );
+			m_rotationProperty = serializedObject.FindProperty( "m_LocalRotation" );
+			m_scaleProperty    = serializedObject.FindProperty( "m_LocalScale" );
 
-            var transform = target as Transform;
+			if ( m_transformRotationGUI == null )
+			{
+				m_transformRotationGUI = new TransformRotationGUI();
+			}
 
-            DrawLine( "P", TargetType.POSITION, transform );
-            DrawLine( "R", TargetType.ROTATION, transform );
-            DrawLine( "S", TargetType.SCALE, transform );
+			m_transformRotationGUI.OnEnable( m_rotationProperty );
 
-            serializedObject.ApplyModifiedProperties();
-        }
+			if ( m_setLocalEulerAnglesMethod == null )
+			{
+				var transformType = typeof( Transform );
+				m_setLocalEulerAnglesMethod = transformType.GetMethod
+				(
+					name: "SetLocalEulerAngles",
+					bindingAttr: SET_LOCAL_EULER_ANGLES_ATTR
+				);
+			}
+		}
 
-        private void DrawLine( string label, TargetType type, Transform transform )
-        {
-            var newValue = Vector3.zero;
-            var isReset  = false;
+		/// <summary>
+		/// Inspector の GUI を描画する時に呼び出されます
+		/// </summary>
+		public override void OnInspectorGUI()
+		{
+			// リセットボタンの GUI スタイルを作成
+			if ( m_resetButtonStyle == null )
+			{
+				m_resetButtonStyle = new GUIStyle( EditorStyles.toolbarButton )
+				{
+					fixedHeight = 20,
+					fixedWidth  = 20,
+				};
+			}
 
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.BeginHorizontal();
+			var oldLabelWidth = EditorGUIUtility.labelWidth;
 
-            if ( GUILayout.Button( label, m_buttonStyle ) )
-            {
-                newValue = type == TargetType.SCALE ? Vector3.one : Vector3.zero;
-                isReset  = true;
-            }
+			// プロパティのラベルの表示幅を設定
+			if ( !EditorGUIUtility.wideMode )
+			{
+				EditorGUIUtility.wideMode   = true;
+				EditorGUIUtility.labelWidth = EditorGUIUtility.currentViewWidth - 212;
+			}
 
-            if ( !isReset )
-            {
-                switch ( type )
-                {
-                    case TargetType.POSITION:
-                        newValue = Vector3Field( transform.localPosition );
-                        break;
-                    case TargetType.ROTATION:
-                        newValue = Vector3Field( transform.localEulerAngles );
-                        break;
-                    case TargetType.SCALE:
-                        newValue = Vector3Field( transform.localScale );
-                        break;
-                }
-            }
+			serializedObject.Update();
 
-            EditorGUILayout.EndHorizontal();
+			// 位置の入力欄を表示
+			using ( new EditorGUILayout.HorizontalScope() )
+			{
+				// リセットボタン
+				if ( GUILayout.Button( "P", m_resetButtonStyle ) )
+				{
+					m_positionProperty.vector3Value = Vector3.zero;
+				}
 
-            if ( !EditorGUI.EndChangeCheck() && !isReset ) return;
+				// 入力欄
+				EditorGUILayout.PropertyField( m_positionProperty, PROPERTY_FIELD_LABEL );
+			}
 
-            Undo.RecordObjects
-            (
-                targets,
-                $"{( isReset ? "Reset" : "Change" )} {transform.gameObject.name} {type.ToString()}"
-            );
+			// 回転角の入力欄を表示
+			using ( new EditorGUILayout.HorizontalScope() )
+			{
+				// リセットボタン
+				if ( GUILayout.Button( "R", m_resetButtonStyle ) )
+				{
+					var targetObjects = m_rotationProperty.serializedObject.targetObjects;
 
-            foreach ( var t in targets.OfType<Transform>() )
-            {
-                switch ( type )
-                {
-                    case TargetType.POSITION:
-                        t.localPosition = newValue;
-                        break;
-                    case TargetType.ROTATION:
-                        t.localEulerAngles = newValue;
-                        break;
-                    case TargetType.SCALE:
-                        t.localScale = newValue;
-                        break;
-                }
+					Undo.RecordObjects( targetObjects, "Inspector" );
 
-                EditorUtility.SetDirty( t );
-            }
-        }
+					foreach ( var n in targetObjects )
+					{
+						m_setLocalEulerAnglesMethod.Invoke( n, RESET_ROTATION_PARAMETERS );
+					}
+				}
 
-        private static Vector3 Vector3Field( Vector3 value )
-        {
-            return EditorGUILayout.Vector3Field( string.Empty, value, GUILayout.Height( 16 ) );
-        }
-    }
+				// 入力欄
+				m_transformRotationGUI.RotationField();
+			}
+
+			// スケーリング値の入力欄を表示
+			using ( new EditorGUILayout.HorizontalScope() )
+			{
+				// リセットボタン
+				if ( GUILayout.Button( "S", m_resetButtonStyle ) )
+				{
+					m_scaleProperty.vector3Value = Vector3.one;
+				}
+
+				// 入力欄
+				EditorGUILayout.PropertyField( m_scaleProperty, PROPERTY_FIELD_LABEL );
+			}
+
+			// 変更を反映
+			serializedObject.ApplyModifiedProperties();
+
+			EditorGUIUtility.labelWidth = oldLabelWidth;
+		}
+	}
 }
