@@ -3,9 +3,9 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace KoganeUnityLibEditor
+namespace KoganeUnityLib.Internal
 {
-	public sealed class TransformRotationGUI
+	internal sealed class TransformRotationGUI
 	{
 		//==============================================================================
 		// 変数(readonly)

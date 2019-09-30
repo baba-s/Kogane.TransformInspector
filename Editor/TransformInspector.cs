@@ -1,12 +1,13 @@
-﻿using System.Reflection;
+﻿using KoganeUnityLib.Internal;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace KoganeUnityLibEditor
+namespace KoganeUnityLib
 {
 	[CanEditMultipleObjects]
 	[CustomEditor( typeof( Transform ) )]
-	public sealed class TransformInspector : Editor
+	internal sealed class TransformInspector : Editor
 	{
 		//==============================================================================
 		// 定数(const)
@@ -133,10 +134,71 @@ namespace KoganeUnityLibEditor
 				EditorGUILayout.PropertyField( m_scaleProperty, PROPERTY_FIELD_LABEL );
 			}
 
+			// 四捨五入ボタンを表示
+			using ( new EditorGUILayout.HorizontalScope() )
+			{
+				EditorGUILayout.LabelField( "Round", GUILayout.MaxWidth( 96 ) );
+
+				var isEnablePosition = m_positionProperty.vector3Value.HasAfterDecimalPoint();
+				var isEnableRotation = m_rotationProperty.quaternionValue.eulerAngles.HasAfterDecimalPoint();
+				var isEnableScale    = m_scaleProperty.vector3Value.HasAfterDecimalPoint();
+
+				var oldEnable = GUI.enabled;
+
+				GUI.enabled = isEnablePosition;
+
+				if ( GUILayout.Button( "P" ) )
+				{
+					RoundPosition();
+				}
+
+				GUI.enabled = isEnableRotation;
+
+				if ( GUILayout.Button( "R" ) )
+				{
+					RoundRotation();
+				}
+
+				GUI.enabled = isEnableScale;
+
+				if ( GUILayout.Button( "S" ) )
+				{
+					RoundScale();
+				}
+
+				GUI.enabled = isEnablePosition || isEnableRotation || isEnableScale;
+
+				if ( GUILayout.Button( "All" ) )
+				{
+					RoundPosition();
+					RoundRotation();
+					RoundScale();
+				}
+
+				GUI.enabled = oldEnable;
+			}
+
 			// 変更を反映
 			serializedObject.ApplyModifiedProperties();
 
 			EditorGUIUtility.labelWidth = oldLabelWidth;
+		}
+
+		private void RoundPosition()
+		{
+			m_positionProperty.vector3Value = m_positionProperty.vector3Value.Round();
+		}
+
+		private void RoundRotation()
+		{
+			var eulerAngles = m_rotationProperty.quaternionValue.eulerAngles;
+			eulerAngles                        = eulerAngles.Round();
+			m_rotationProperty.quaternionValue = Quaternion.Euler( eulerAngles );
+		}
+
+		private void RoundScale()
+		{
+			m_scaleProperty.vector3Value = m_scaleProperty.vector3Value.Round();
 		}
 	}
 }
