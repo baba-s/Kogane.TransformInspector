@@ -1,10 +1,13 @@
 ﻿using System;
 using UnityEngine;
 
-namespace KoganeUnityLib.Internal
+namespace UniTransformInspector
 {
 	internal static class Vector3Ext
 	{
+		//================================================================================
+		// 関数（static）
+		//================================================================================
 		public static bool HasAfterDecimalPoint( this float self )
 		{
 			return 0.000001f < Math.Abs( self % 1 );

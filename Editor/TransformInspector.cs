@@ -1,40 +1,39 @@
-﻿using KoganeUnityLib.Internal;
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace KoganeUnityLib
+namespace UniTransformInspector
 {
 	[CanEditMultipleObjects]
 	[CustomEditor( typeof( Transform ) )]
 	internal sealed class TransformInspector : Editor
 	{
-		//==============================================================================
-		// 定数(const)
-		//==============================================================================
+		//================================================================================
+		// 定数（const）
+		//================================================================================
 		private const BindingFlags SET_LOCAL_EULER_ANGLES_ATTR =
 			BindingFlags.Instance |
 			BindingFlags.NonPublic;
-
-		//==============================================================================
-		// 定数(static readonly)
-		//==============================================================================
+		
+		//================================================================================
+		// 定数（static readonly）
+		//================================================================================
 		private static readonly object[]   RESET_ROTATION_PARAMETERS = { Vector3.zero, 0 };
 		private static readonly GUIContent PROPERTY_FIELD_LABEL      = new GUIContent( string.Empty );
-
-		//==============================================================================
+		
+		//================================================================================
 		// 変数
-		//==============================================================================
+		//================================================================================
 		private SerializedProperty   m_positionProperty;
 		private SerializedProperty   m_rotationProperty;
 		private SerializedProperty   m_scaleProperty;
 		private GUIStyle             m_resetButtonStyle;
 		private TransformRotationGUI m_transformRotationGUI;
 		private MethodInfo           m_setLocalEulerAnglesMethod;
-
-		//==============================================================================
+		
+		//================================================================================
 		// 関数
-		//==============================================================================
+		//================================================================================
 		/// <summary>
 		/// 有効になった時に呼び出されます
 		/// </summary>

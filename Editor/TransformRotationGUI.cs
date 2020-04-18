@@ -3,20 +3,20 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace KoganeUnityLib.Internal
+namespace UniTransformInspector
 {
 	internal sealed class TransformRotationGUI
 	{
-		//==============================================================================
-		// 変数(readonly)
-		//==============================================================================
+		//================================================================================
+		// 変数（readonly）
+		//================================================================================
 		private readonly object     m_instance;
 		private readonly MethodInfo m_onEnableMethod;
 		private readonly MethodInfo m_rotationFieldMethod;
-		
-		//==============================================================================
+
+		//================================================================================
 		// 関数
-		//==============================================================================
+		//================================================================================
 		/// <summary>
 		/// コンストラクタ
 		/// </summary>
@@ -29,7 +29,7 @@ namespace KoganeUnityLib.Internal
 
 			m_instance = Activator.CreateInstance( type );
 		}
-		
+
 		/// <summary>
 		/// 有効になった時に呼び出します
 		/// </summary>
@@ -38,7 +38,7 @@ namespace KoganeUnityLib.Internal
 			var parameters = new object[] { property, new GUIContent( string.Empty ) };
 			m_onEnableMethod.Invoke( m_instance, parameters );
 		}
-		
+
 		/// <summary>
 		/// Inspector の GUI を描画します
 		/// </summary>
