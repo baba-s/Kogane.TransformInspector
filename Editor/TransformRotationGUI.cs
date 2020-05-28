@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace UniTransformInspector
+namespace Kogane.Internal
 {
 	internal sealed class TransformRotationGUI
 	{

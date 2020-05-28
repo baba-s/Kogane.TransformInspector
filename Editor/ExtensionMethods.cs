@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace UniTransformInspector
+namespace Kogane.Internal
 {
 	internal static class Vector3Ext
 	{

@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace UniTransformInspector
+namespace Kogane.Internal
 {
 	[CanEditMultipleObjects]
 	[CustomEditor( typeof( Transform ) )]
@@ -14,23 +14,23 @@ namespace UniTransformInspector
 		private const BindingFlags SET_LOCAL_EULER_ANGLES_ATTR =
 			BindingFlags.Instance |
 			BindingFlags.NonPublic;
-		
+
 		//================================================================================
 		// 定数（static readonly）
 		//================================================================================
-		private static readonly object[]   RESET_ROTATION_PARAMETERS = { Vector3.zero, 0 };
-		private static readonly GUIContent PROPERTY_FIELD_LABEL      = new GUIContent( string.Empty );
-		
+		private static readonly object[]        RESET_ROTATION_PARAMETERS = { Vector3.zero, 0 };
+		private static readonly GUIContent      PROPERTY_FIELD_LABEL      = new GUIContent( string.Empty );
+		private static readonly GUILayoutOption RESET_BUTTON_OPTION       = GUILayout.Width( 20 );
+
 		//================================================================================
 		// 変数
 		//================================================================================
 		private SerializedProperty   m_positionProperty;
 		private SerializedProperty   m_rotationProperty;
 		private SerializedProperty   m_scaleProperty;
-		private GUIStyle             m_resetButtonStyle;
 		private TransformRotationGUI m_transformRotationGUI;
 		private MethodInfo           m_setLocalEulerAnglesMethod;
-		
+
 		//================================================================================
 		// 関数
 		//================================================================================
@@ -66,16 +66,6 @@ namespace UniTransformInspector
 		/// </summary>
 		public override void OnInspectorGUI()
 		{
-			// リセットボタンの GUI スタイルを作成
-			if ( m_resetButtonStyle == null )
-			{
-				m_resetButtonStyle = new GUIStyle( EditorStyles.toolbarButton )
-				{
-					fixedHeight = 20,
-					fixedWidth  = 20,
-				};
-			}
-
 			var oldLabelWidth = EditorGUIUtility.labelWidth;
 
 			// プロパティのラベルの表示幅を設定
@@ -91,7 +81,7 @@ namespace UniTransformInspector
 			using ( new EditorGUILayout.HorizontalScope() )
 			{
 				// リセットボタン
-				if ( GUILayout.Button( "P", m_resetButtonStyle ) )
+				if ( GUILayout.Button( "P", RESET_BUTTON_OPTION ) )
 				{
 					m_positionProperty.vector3Value = Vector3.zero;
 				}
@@ -104,7 +94,7 @@ namespace UniTransformInspector
 			using ( new EditorGUILayout.HorizontalScope() )
 			{
 				// リセットボタン
-				if ( GUILayout.Button( "R", m_resetButtonStyle ) )
+				if ( GUILayout.Button( "R", RESET_BUTTON_OPTION ) )
 				{
 					var targetObjects = m_rotationProperty.serializedObject.targetObjects;
 
@@ -124,7 +114,7 @@ namespace UniTransformInspector
 			using ( new EditorGUILayout.HorizontalScope() )
 			{
 				// リセットボタン
-				if ( GUILayout.Button( "S", m_resetButtonStyle ) )
+				if ( GUILayout.Button( "S", RESET_BUTTON_OPTION ) )
 				{
 					m_scaleProperty.vector3Value = Vector3.one;
 				}
